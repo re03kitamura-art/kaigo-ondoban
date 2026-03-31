@@ -1,0 +1,2506 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>介護記録</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --g: #2A6045;
+      --g-l: #EBF4EE;
+      --g-m: #C8E4D2;
+      --g-d: #1D4530;
+      --n: #1A4F82;
+      --n-l: #E8F0FA;
+      --n-m: #B8D0F0;
+      --o: #C44E0A;
+      --o-l: #FEF3EC;
+      --bg: #F2F0EB;
+      --surface: #FFFFFF;
+      --border: #DDD9D0;
+      --border-l: #EAE7E0;
+      --muted: #B5B0A6;
+      --text: #1A1816;
+      --sub: #6E6A64;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Noto Sans JP', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ══ HEADER ════════════════════════════════ */
+    .hdr {
+      flex-shrink: 0;
+      height: 46px;
+      background: var(--g);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 8px;
+      z-index: 60;
+    }
+
+    .hdr-logo {
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .1em;
+      color: #fff;
+    }
+
+    .hdr-sep {
+      width: 1px;
+      height: 18px;
+      background: #ffffff30;
+      flex-shrink: 0;
+    }
+
+    .hdr-date {
+      font-size: 11px;
+      color: #ffffffaa;
+      flex: 1;
+    }
+
+    .hdr-save {
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: #ffffff22;
+      border: 1px solid #ffffff44;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .hdr-save:active {
+      background: #ffffff44;
+    }
+
+    /* ══ TABS ═══════════════════════════════════ */
+    .tabbar {
+      flex-shrink: 0;
+      height: 42px;
+      background: var(--surface);
+      border-bottom: 2px solid var(--border);
+      display: flex;
+    }
+
+    .tab {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--sub);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      position: relative;
+      transition: color .15s;
+    }
+
+    .tab::after {
+      content: "";
+      position: absolute;
+      bottom: -2px;
+      left: 20%;
+      right: 20%;
+      height: 2px;
+      border-radius: 2px;
+      background: transparent;
+      transition: background .15s;
+    }
+
+    .tab.tc {
+      color: var(--g);
+      font-weight: 700;
+    }
+
+    .tab.tc::after {
+      background: var(--g);
+    }
+
+    .tab.tn {
+      color: var(--n);
+      font-weight: 700;
+    }
+
+    .tab.tn::after {
+      background: var(--n);
+    }
+
+    /* ══ BODY ═══════════════════════════════════ */
+    .body {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    /* ══ TABLE WRAPPER ══════════════════════════ */
+    .tbl-wrap {
+      flex: 1;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ══ TABLE ══════════════════════════════════ */
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: fixed;
+    }
+
+    /* 列幅 */
+    .col-name {
+      width: 72px;
+    }
+
+    .col-meal {
+      width: 56px;
+    }
+
+    .col-water {
+      width: 85px;
+    }
+
+    @media(min-width:768px) {
+      .col-water {
+        width: 110px;
+      }
+    }
+
+    @media(min-width:1024px) {
+      .col-water {
+        width: 130px;
+      }
+    }
+
+    .col-note {
+      width: 80px;
+    }
+
+    .col-vital {
+      width: 60px;
+    }
+
+    .col-toilet {
+      width: 52px;
+    }
+
+    .col-save {
+      width: 52px;
+    }
+
+    /* ── ヘッダー行 */
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background: var(--surface);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      color: var(--sub);
+      padding: 10px 4px 8px;
+      text-align: center;
+      white-space: normal;
+      line-height: 1.3;
+      word-break: break-word;
+      border-bottom: 2px solid var(--border);
+    }
+
+    thead th:first-child {
+      text-align: left;
+      padding-left: 10px;
+      position: sticky;
+      left: 0;
+      z-index: 40;
+      background: var(--surface);
+      border-right: 1px solid var(--border-l);
+    }
+
+    /* ── データ行 */
+    tbody tr {
+      border-bottom: 1px solid var(--border-l);
+    }
+
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #F9F8F5;
+    }
+
+    tbody tr:nth-child(odd) {
+      background: var(--surface);
+    }
+
+    /* 名前セル */
+    td.td-name {
+      position: sticky;
+      left: 0;
+      z-index: 20;
+      padding: 10px 8px 10px 10px;
+      border-right: 1px solid var(--border-l);
+      min-width: 72px;
+    }
+
+    /* 奇偶で名前セル背景も合わせる */
+    tbody tr:nth-child(even) td.td-name {
+      background: #F9F8F5;
+    }
+
+    tbody tr:nth-child(odd) td.td-name {
+      background: var(--surface);
+    }
+
+    .name-main {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .name-sub {
+      font-size: 9px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    /* ── 摂取量セル */
+    td.td-amt {
+      padding: 6px 3px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .amt-btn {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 40px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      background: #fff;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--sub);
+      transition: all .1s;
+      user-select: none;
+      -webkit-user-select: none;
+      gap: 1px;
+    }
+
+    .amt-btn:active {
+      transform: scale(.93);
+    }
+
+    .amt-unit {
+      font-size: 9px;
+      font-weight: 400;
+      color: var(--muted);
+    }
+
+    /* 状態別スタイル */
+    .amt-full {
+      background: var(--g);
+      border-color: var(--g);
+      color: #fff;
+    }
+
+    .amt-full .amt-unit {
+      color: #ffffffaa;
+    }
+
+    .amt-8 {
+      background: var(--g-l);
+      border-color: var(--g-m);
+      color: var(--g-d);
+    }
+
+    .amt-6 {
+      background: #FFF8E8;
+      border-color: #F0D070;
+      color: #7A5A00;
+    }
+
+    .amt-4 {
+      background: #FEF3EC;
+      border-color: #F4C090;
+      color: #8A3A00;
+    }
+
+    .amt-2 {
+      background: #FCEAEA;
+      border-color: #F0A0A0;
+      color: #8A1A1A;
+    }
+
+    .amt-none {
+      background: var(--bg);
+      border-color: var(--muted);
+      color: var(--muted);
+    }
+
+    /* ── 水分セル ── */
+    td.td-water {
+      padding: 6px 4px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .water-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+    }
+
+    .w-adj-btn {
+      width: 20px;
+      height: 36px;
+      border-radius: 6px;
+      border: 1.5px solid var(--n-m);
+      background: var(--n-l);
+      color: var(--n);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .1s;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .w-adj-btn:active {
+      transform: scale(.9);
+    }
+
+    .w-adj-btn:hover {
+      background: var(--n);
+      color: #fff;
+    }
+
+    .water-display {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--n-l);
+      border: 1.5px solid var(--n-m);
+      border-radius: 8px;
+      height: 40px;
+      min-width: 44px;
+      color: var(--n);
+      font-weight: 700;
+    }
+
+    .water-val {
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .water-unit {
+      font-size: 9px;
+      line-height: 1;
+      margin-top: 1px;
+      opacity: .7;
+    }
+
+    @media(min-width:768px) {
+      .w-adj-btn {
+        width: 26px;
+        height: 46px;
+        font-size: 16px;
+      }
+
+      .water-display {
+        height: 50px;
+        min-width: 60px;
+      }
+
+      .water-val {
+        font-size: 15px;
+      }
+    }
+
+    /* ── テキスト系セル */
+    td.td-text {
+      padding: 6px 4px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .mini-input {
+      width: 100%;
+      padding: 5px 4px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 10px;
+      font-family: inherit;
+      color: var(--text);
+      background: #fff;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .mini-input:focus {
+      border-color: var(--g);
+    }
+
+    .mini-input.n-focus:focus {
+      border-color: var(--n);
+    }
+
+    /* バイタルセル */
+    td.td-vital {
+      padding: 4px 3px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .vital-inp {
+      width: 100%;
+      padding: 4px 3px;
+      border: 1px solid var(--n-m);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--n-l);
+      text-align: center;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .vital-inp.alrt {
+      background: var(--o-l);
+      border-color: #F4C090;
+      color: var(--o);
+    }
+
+    /* 血圧：上下を縦並び */
+    .vital-bp {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      align-items: stretch;
+    }
+
+    .vital-bp input {
+      width: 100%;
+    }
+
+    .vital-bp-sep {
+      font-size: 9px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1;
+    }
+
+    /* 血圧列は専用幅 */
+    .col-bp {
+      width: 110px;
+    }
+
+    @media(min-width:768px) {
+      .col-bp {
+        width: 140px;
+      }
+    }
+
+    @media(min-width:1024px) {
+      .col-bp {
+        width: 160px;
+      }
+    }
+
+    /* ── 血圧＋10/－10ボタン ── */
+    .vbs-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+    }
+
+    .v-adj-btn {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      border: 1.5px solid var(--n-m);
+      background: var(--n-l);
+      color: var(--n);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .1s;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .v-adj-btn:active {
+      transform: scale(.9);
+    }
+
+    .v-adj-btn:hover {
+      background: var(--n);
+      color: #fff;
+    }
+
+    @media(min-width:768px) {
+      .v-adj-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+      }
+    }
+
+    /* チップ系セル */
+    td.td-chip {
+      padding: 4px 3px;
+      vertical-align: middle;
+    }
+
+    /* 回数カウンターセル */
+    td.td-count {
+      padding: 4px 3px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .count-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .cnt-btn {
+      width: 28px;
+      height: 20px;
+      border-radius: 5px;
+      border: 1.5px solid var(--n-m);
+      background: var(--n-l);
+      color: var(--n);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .1s;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .cnt-btn:active {
+      background: var(--n);
+      color: #fff;
+      transform: scale(.93);
+    }
+
+    .cnt-val {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--n);
+      min-width: 22px;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .cnt-val.nonzero {
+      color: var(--g-d);
+    }
+
+    @media(min-width:768px) {
+      .cnt-btn {
+        width: 34px;
+        height: 24px;
+        font-size: 15px;
+        border-radius: 6px;
+      }
+
+      .cnt-val {
+        font-size: 20px;
+      }
+    }
+
+    @media(min-width:1024px) {
+      .cnt-btn {
+        width: 38px;
+        height: 26px;
+        font-size: 16px;
+      }
+
+      .cnt-val {
+        font-size: 22px;
+      }
+    }
+
+    .chip-mini {
+      display: inline-block;
+      padding: 3px 5px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--sub);
+      cursor: pointer;
+      margin: 1px;
+      white-space: nowrap;
+    }
+
+    .chip-mini.on {
+      background: var(--n);
+      border-color: var(--n);
+      color: #fff;
+    }
+
+    /* ── 保存セル */
+    td.td-save {
+      padding: 4px 4px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .save-cell-btn {
+      width: 44px;
+      height: 40px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+      margin: 0 auto;
+    }
+
+    .save-cell-btn:active {
+      transform: scale(.93);
+    }
+
+    .sc-care {
+      background: var(--g);
+      color: #fff;
+    }
+
+    .sc-nurse {
+      background: var(--n);
+      color: #fff;
+    }
+
+    .sc-done {
+      background: var(--g-l);
+      color: var(--g);
+      border: 1.5px solid var(--g-m);
+    }
+
+    .sc-done-n {
+      background: var(--n-l);
+      color: var(--n);
+      border: 1.5px solid var(--n-m);
+    }
+
+    .save-icon {
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .save-lbl {
+      font-size: 8px;
+      line-height: 1;
+    }
+
+    /* ── 欠食ボタン */
+    .col-absent {
+      width: 52px;
+    }
+
+    td.td-absent {
+      padding: 6px 3px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .absent-btn {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 40px;
+      border-radius: 8px;
+      border: 2px solid var(--border);
+      background: #fff;
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      transition: all .12s;
+      user-select: none;
+      -webkit-user-select: none;
+      gap: 1px;
+      line-height: 1.2;
+    }
+
+    .absent-btn:active {
+      transform: scale(.93);
+    }
+
+    .absent-btn.on {
+      background: #2C1A1A;
+      border-color: #2C1A1A;
+      color: #fff;
+    }
+
+    .absent-btn .absent-icon {
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .absent-btn .absent-lbl {
+      font-size: 9px;
+    }
+
+    @media(min-width:768px) {
+      .col-absent {
+        width: 68px;
+      }
+
+      .absent-btn {
+        width: 60px;
+        height: 52px;
+        font-size: 11px;
+        border-radius: 10px;
+      }
+
+      .absent-btn .absent-icon {
+        font-size: 16px;
+      }
+
+      .absent-btn .absent-lbl {
+        font-size: 10px;
+      }
+    }
+
+    @media(min-width:1024px) {
+      .col-absent {
+        width: 80px;
+      }
+
+      .absent-btn {
+        width: 72px;
+        height: 58px;
+        font-size: 12px;
+      }
+
+      .absent-btn .absent-icon {
+        font-size: 18px;
+      }
+
+      .absent-btn .absent-lbl {
+        font-size: 11px;
+      }
+    }
+
+    .absent-dim {
+      opacity: .28;
+      pointer-events: none;
+    }
+
+    /* ── 全量リセット行 */
+    .reset-row {
+      position: sticky;
+      bottom: 0;
+      z-index: 25;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+    }
+
+    .reset-row td {
+      padding: 6px 4px;
+      text-align: center;
+    }
+
+    .reset-all-btn {
+      padding: 6px 10px;
+      border-radius: 20px;
+      background: var(--g);
+      color: #fff;
+      border: none;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .reset-all-btn.nurse {
+      background: var(--n);
+    }
+
+    .reset-all-btn:active {
+      opacity: .85;
+    }
+
+    /* ══ FOOTER ══════════════════════════════════ */
+    .footer {
+      flex-shrink: 0;
+      height: 32px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 10px;
+      font-size: 10px;
+      color: var(--sub);
+    }
+
+    .f-count {
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .f-alert {
+      font-weight: 700;
+      color: var(--o);
+    }
+
+    .f-hint {
+      color: var(--muted);
+      margin-left: auto;
+      font-size: 9px;
+    }
+
+    /* ══ MEAL SUB TAB ════════════════════════════ */
+    .mealbar {
+      flex-shrink: 0;
+      height: 38px;
+      background: #F7F5F0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 0;
+      padding: 4px 8px;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .mtab {
+      flex: 1;
+      height: 30px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--sub);
+      cursor: pointer;
+      transition: all .15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .mtab.active {
+      background: var(--g);
+      border-color: var(--g);
+      color: #fff;
+    }
+
+    .mtab-done {
+      border-color: var(--g-m);
+      color: var(--g);
+      background: var(--g-l);
+    }
+
+    @media(min-width:768px) {
+      .mealbar {
+        height: 44px;
+        padding: 6px 16px;
+        gap: 10px;
+      }
+
+      .mtab {
+        font-size: 13px;
+        height: 34px;
+      }
+    }
+
+    @media(min-width:1024px) {
+      .mealbar {
+        height: 48px;
+        padding: 8px 20px;
+        gap: 12px;
+      }
+
+      .mtab {
+        font-size: 14px;
+        height: 36px;
+      }
+    }
+
+    /* ══ 排泄ログUI ══════════════════════════════ */
+    td.td-toilet-log {
+      padding: 8px 8px;
+      vertical-align: top;
+      min-width: 240px;
+      max-height: 200px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .toilet-log-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      width: 100%;
+    }
+
+    .toilet-log-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+
+    .tl-type {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 20px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      min-width: 50px;
+      text-align: center;
+    }
+
+    .tl-urine {
+      background: var(--n-l);
+      color: var(--n);
+    }
+
+    .tl-stool {
+      background: #FEF3EC;
+      color: var(--o);
+    }
+
+    .tl-hour {
+      padding: 5px 6px;
+      border-radius: 6px;
+      border: 1.5px solid var(--border);
+      background: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+      min-width: 70px;
+      flex-shrink: 0;
+    }
+
+    .tl-hour:focus {
+      border-color: var(--n);
+      box-shadow: 0 0 0 2px rgba(26, 79, 130, 0.1);
+    }
+
+    .tl-del {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-family: inherit;
+      transition: all .12s;
+    }
+
+    .tl-del:hover {
+      border-color: var(--o);
+      color: var(--o);
+      background: var(--o-l);
+    }
+
+    .tl-del:active {
+      background: var(--o);
+      color: #fff;
+      border-color: var(--o);
+      transform: scale(0.9);
+    }
+
+    .tl-add-row {
+      display: flex;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .tl-add-btn {
+      flex: 1;
+      min-height: 32px;
+      padding: 6px 8px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1.5px dashed var(--border);
+      background: transparent;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--sub);
+      transition: all .12s;
+    }
+
+    .tl-add-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .tl-add-btn.urine {
+      border-color: var(--n);
+      color: var(--n);
+    }
+
+    .tl-add-btn.urine:hover {
+      border-color: var(--n);
+      color: #fff;
+      background: var(--n);
+    }
+
+    .tl-add-btn.stool {
+      border-color: var(--o);
+      color: var(--o);
+    }
+
+    .tl-add-btn.stool:hover {
+      border-color: var(--o);
+      color: #fff;
+      background: var(--o);
+    }
+
+    .tl-add-btn:active {
+      transform: scale(.96);
+    }
+
+    @media(min-width:768px) {
+      td.td-toilet-log {
+        min-width: 280px;
+        padding: 10px 8px;
+        max-height: 220px;
+      }
+
+      .tl-type {
+        font-size: 12px;
+        padding: 5px 10px;
+      }
+
+      .tl-hour {
+        font-size: 13px;
+        padding: 6px 8px;
+        min-width: 80px;
+      }
+
+      .tl-del {
+        width: 28px;
+        height: 28px;
+        font-size: 15px;
+      }
+
+      .tl-add-btn {
+        font-size: 13px;
+        padding: 7px 10px;
+      }
+    }
+
+    @media(min-width:1024px) {
+      td.td-toilet-log {
+        min-width: 320px;
+      }
+
+      .tl-type {
+        font-size: 13px;
+      }
+
+      .tl-hour {
+        font-size: 14px;
+      }
+
+      .tl-add-btn {
+        font-size: 14px;
+        min-height: 36px;
+      }
+    }
+
+    .tl-state {
+      padding: 5px 8px;
+      border-radius: 6px;
+      border: 1.5px solid #F4C8A8;
+      background: #FFF8F3;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--o);
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+      flex-shrink: 0;
+      min-width: 80px;
+      transition: all .12s;
+    }
+
+    .tl-state:focus {
+      border-color: var(--o);
+      box-shadow: 0 0 0 2px rgba(196, 78, 10, 0.1);
+    }
+
+    .tl-state:hover {
+      background: #FFEEE0;
+    }
+
+    @media(min-width:768px) {
+      .tl-state {
+        font-size: 13px;
+        padding: 6px 10px;
+        min-width: 90px;
+      }
+    }
+
+    @media(min-width:1024px) {
+      .tl-state {
+        font-size: 14px;
+        min-width: 100px;
+      }
+    }
+
+    /* ══ 排泄オプション（浣腸・下剤） ══════════ */
+    td.td-toilet-opt {
+      padding: 8px 4px;
+      vertical-align: middle;
+      text-align: center;
+    }
+
+    /* ══ TOAST ══════════════════════════════════ */
+    .toast {
+      position: fixed;
+      bottom: 38px;
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: var(--text);
+      color: #fff;
+      padding: 7px 16px;
+      border-radius: 40px;
+      font-size: 12px;
+      font-weight: 600;
+      opacity: 0;
+      transition: all .22s;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 999;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ══ VOICE FAB ══════════════════════════════ */
+    .voice-fab {
+      position: fixed;
+      right: 20px;
+      bottom: 80px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--n);
+      color: #fff;
+      border: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      outline: none;
+    }
+
+    .voice-fab:active {
+      transform: scale(0.9);
+    }
+
+    .voice-fab.recording {
+      background: #cc1b1b;
+      animation: pulse-red 1.5s infinite;
+    }
+
+    .voice-fab svg {
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+    }
+
+    @keyframes pulse-red {
+      0% {
+        box-shadow: 0 0 0 0 rgba(204, 27, 27, 0.7);
+      }
+
+      70% {
+        box-shadow: 0 0 0 15px rgba(204, 27, 27, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(204, 27, 27, 0);
+      }
+    }
+
+    @media (min-width: 768px) {
+      .voice-fab {
+        width: 64px;
+        height: 64px;
+        right: 30px;
+        bottom: 100px;
+      }
+
+      .voice-fab svg {
+        width: 28px;
+        height: 28px;
+      }
+    }
+
+    /* ══ TABLET（768px以上）══════════════════════ */
+    @media (min-width:768px) {
+
+      /* ヘッダー */
+      .hdr {
+        height: 54px;
+        padding: 0 24px;
+        gap: 14px;
+      }
+
+      .hdr-logo {
+        font-size: 15px;
+      }
+
+      .hdr-date {
+        font-size: 13px;
+      }
+
+      .hdr-save {
+        padding: 8px 20px;
+        font-size: 13px;
+        border-radius: 24px;
+      }
+
+      /* タブ */
+      .tabbar {
+        height: 50px;
+      }
+
+      .tab {
+        font-size: 14px;
+        gap: 8px;
+      }
+
+      /* 列幅拡大 */
+      .col-name {
+        width: 110px;
+      }
+
+      .col-meal {
+        width: 80px;
+      }
+
+      .col-note {
+        width: 140px;
+      }
+
+      .col-vital {
+        width: 80px;
+      }
+
+      .col-toilet {
+        width: 280px;
+      }
+
+      .col-save {
+        width: 72px;
+      }
+
+      /* テーブルヘッダー */
+      thead th {
+        font-size: 12px;
+        padding: 10px 8px 8px;
+      }
+
+      thead th:first-child {
+        padding-left: 16px;
+      }
+
+      /* 名前セル */
+      td.td-name {
+        padding: 12px 10px 12px 16px;
+        min-width: 110px;
+      }
+
+      .name-main {
+        font-size: 14px;
+      }
+
+      .name-sub {
+        font-size: 11px;
+      }
+
+      /* 摂取量ボタン */
+      td.td-amt {
+        padding: 8px 5px;
+      }
+
+      .amt-btn {
+        width: 68px;
+        height: 52px;
+        border-radius: 10px;
+        font-size: 14px;
+        border-width: 2px;
+      }
+
+      .amt-unit {
+        font-size: 11px;
+      }
+
+      /* 水分ボタン */
+      td.td-water {
+        padding: 8px 6px;
+      }
+
+      .water-btn {
+        width: 78px;
+        height: 52px;
+        border-radius: 10px;
+        font-size: 15px;
+        border-width: 2px;
+      }
+
+      .water-sub {
+        font-size: 11px;
+      }
+
+      /* テキスト入力 */
+      td.td-text {
+        padding: 8px 6px;
+      }
+
+      .mini-input {
+        padding: 7px 8px;
+        font-size: 13px;
+        border-radius: 8px;
+      }
+
+      /* バイタル */
+      td.td-vital {
+        padding: 6px 5px;
+      }
+
+      .vital-inp {
+        padding: 6px 4px;
+        font-size: 15px;
+        border-radius: 8px;
+      }
+
+      .vital-sep {
+        font-size: 13px;
+      }
+
+      /* チップ */
+      td.td-chip {
+        padding: 6px 5px;
+      }
+
+      .chip-mini {
+        padding: 5px 9px;
+        font-size: 11px;
+        border-radius: 6px;
+        margin: 2px;
+      }
+
+      /* 保存ボタン */
+      td.td-save {
+        padding: 6px 6px;
+      }
+
+      .save-cell-btn {
+        width: 60px;
+        height: 52px;
+        border-radius: 10px;
+      }
+
+      .save-icon {
+        font-size: 18px;
+      }
+
+      .save-lbl {
+        font-size: 10px;
+      }
+
+      /* リセット行 */
+      .reset-row td {
+        padding: 8px 16px;
+      }
+
+      .reset-all-btn {
+        padding: 9px 20px;
+        font-size: 13px;
+        border-radius: 24px;
+      }
+
+      /* フッター */
+      .footer {
+        height: 38px;
+        font-size: 12px;
+        padding: 0 20px;
+        gap: 14px;
+      }
+
+      .f-hint {
+        font-size: 11px;
+      }
+    }
+
+    /* ══ 大型タブレット・デスクトップ（1024px以上）══ */
+    @media (min-width:1024px) {
+      .hdr {
+        height: 58px;
+      }
+
+      .hdr-logo {
+        font-size: 16px;
+        letter-spacing: .12em;
+      }
+
+      .tabbar {
+        height: 54px;
+      }
+
+      .tab {
+        font-size: 15px;
+      }
+
+      .col-name {
+        width: 140px;
+      }
+
+      .col-meal {
+        width: 96px;
+      }
+
+      .col-note {
+        width: 180px;
+      }
+
+      .col-vital {
+        width: 90px;
+      }
+
+      .col-toilet {
+        width: 340px;
+      }
+
+      .col-save {
+        width: 80px;
+      }
+
+      td.td-name {
+        min-width: 140px;
+        padding: 14px 12px 14px 20px;
+      }
+
+      .name-main {
+        font-size: 15px;
+      }
+
+      .name-sub {
+        font-size: 12px;
+      }
+
+      .amt-btn {
+        width: 82px;
+        height: 58px;
+        font-size: 15px;
+      }
+
+      .water-btn {
+        width: 90px;
+        height: 58px;
+        font-size: 16px;
+      }
+
+      .mini-input {
+        font-size: 14px;
+        padding: 8px 10px;
+      }
+
+      .vital-inp {
+        font-size: 16px;
+        padding: 7px 6px;
+      }
+
+      .chip-mini {
+        font-size: 12px;
+        padding: 6px 10px;
+        border-radius: 6px;
+      }
+
+      .save-cell-btn {
+        width: 68px;
+        height: 58px;
+      }
+
+      .save-icon {
+        font-size: 20px;
+      }
+
+      .save-lbl {
+        font-size: 11px;
+      }
+
+      .footer {
+        height: 42px;
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="hdr">
+    <div class="hdr-logo">介護記録</div>
+    <div class="hdr-sep"></div>
+    <div class="hdr-date" id="hdrDate"></div>
+    <button class="hdr-save" onclick="saveAll()">全員保存</button>
+  </div>
+
+  <div class="tabbar">
+    <button class="tab tc" id="tabC" onclick="switchTab('care')">🍚 介護記録</button>
+    <button class="tab" id="tabT" onclick="switchTab('toilet')">🚽 排泄記録</button>
+    <button class="tab" id="tabN" onclick="switchTab('nurse')">🩺 看護記録</button>
+  </div>
+
+  <!-- 朝昼夕サブタブ（介護記録タブのみ表示） -->
+  <div class="mealbar" id="mealbar">
+    <button class="mtab active" id="mtab-morning" onclick="switchMeal('morning')">🌅 朝食</button>
+    <button class="mtab" id="mtab-lunch" onclick="switchMeal('lunch')">☀️ 昼食</button>
+    <button class="mtab" id="mtab-dinner" onclick="switchMeal('dinner')">🌙 夕食</button>
+  </div>
+
+  <div class="body">
+    <div class="tbl-wrap">
+      <table id="mainTable">
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+        <tfoot id="tfoot"></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span id="fCount"></span>
+    <span id="fAlert" class="f-alert"></span>
+    <span class="f-hint">タップで摂取量を切替</span>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <button id="voiceBtn" class="voice-fab" onclick="toggleVoiceInput()" title="音声入力">
+    <svg viewBox="0 0 24 24">
+      <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+      <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+    </svg>
+  </button>
+
+  <script>
+    // ════════════════════════════════════════════
+    //  設定
+    // ════════════════════════════════════════════
+    const GAS_URL = "https://script.google.com/macros/s/ここにGASのURLを貼る/exec";
+
+    const RESIDENTS = [
+      { id: "r01", name: "山田 花子", room: "101", care: "要介護3" },
+      { id: "r02", name: "田中 一郎", room: "102", care: "要介護2" },
+      { id: "r03", name: "佐藤 光子", room: "103", care: "要介護5" },
+      { id: "r04", name: "鈴木 次郎", room: "201", care: "要介護1" },
+      { id: "r05", name: "木村 美代", room: "202", care: "要介護4" },
+      { id: "r06", name: "伊藤 三郎", room: "203", care: "要介護3" },
+      { id: "r07", name: "渡辺 幸子", room: "204", care: "要介護2" },
+      { id: "r08", name: "中村 義雄", room: "205", care: "要介護4" },
+    ];
+
+    // 摂取量サイクル（タップごとに次へ）
+    const AMT_CYCLE = ["全量", "8割", "6割", "4割", "2割", "なし"];
+    const AMT_CLASS = {
+      "全量": "amt-full", "8割": "amt-8", "6割": "amt-6",
+      "4割": "amt-4", "2割": "amt-2", "なし": "amt-none",
+    };
+
+    // 水分サイクル（100ml刻み）
+    const WATER_CYCLE = [1000, 900, 800, 700, 600, 500, 400, 300, 200, 100, 0];
+
+    // 食事列定義
+    const MEAL_COLS = [
+      { id: "staple", label: "主食" },
+      { id: "side", label: "副食" },
+    ];
+
+    // 食事区分
+    const MEAL_TIMES = [
+      { id: "morning", label: "朝食", icon: "🌅" },
+      { id: "lunch", label: "昼食", icon: "☀️" },
+      { id: "dinner", label: "夕食", icon: "🌙" },
+    ];
+
+    // 排泄：浣腸・下剤チップのみ（複数選択可）
+    const TOILET_OPTS = ["浣腸", "下剤"];
+    // 観察チップ
+    const COND_OPTS = ["良眠", "覚醒", "傾眠", "不穏", "発熱", "疼痛"];
+
+    // ════════════════════════════════════════════
+    //  状態
+    // ════════════════════════════════════════════
+    let tab = "care";
+    let mealTime = "morning";
+
+    const meals = {};
+    const nurse = {};
+    const toiletData = {};  // 排泄記録（独立）
+
+    RESIDENTS.forEach(r => {
+      meals[r.id] = {};
+      MEAL_TIMES.forEach(mt => {
+        meals[r.id][mt.id] = {
+          meal: Object.fromEntries(MEAL_COLS.map(m => [m.id, "全量"])),
+          water: 180, absent: false, note: "", saved: false,
+        };
+      });
+      nurse[r.id] = {
+        temp: "36.5", bpS: "", bpD: "", spo2: "98", pulse: "",
+        cond: new Set(), note: "", saved: false,
+      };
+      toiletData[r.id] = {
+        logs: [],          // [{ type:"排尿"|"排便", hour:6 }, ...]
+        opts: new Set(),   // 浣腸・下剤
+        note: "", saved: false,
+      };
+    });
+
+    // ════════════════════════════════════════════
+    //  初期化
+    // ════════════════════════════════════════════
+    (function init() {
+      const now = new Date();
+      const days = "日月火水木金土";
+      document.getElementById("hdrDate").textContent =
+        `${now.getMonth() + 1}/${now.getDate()}（${days[now.getDay()]}）` +
+        ` ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      buildTable();
+      updateFooter();
+    })();
+
+    // ════════════════════════════════════════════
+    //  タブ切替
+    // ════════════════════════════════════════════
+    function switchTab(t) {
+      tab = t;
+      document.getElementById("tabC").className = "tab" + (t === "care" ? " tc" : "");
+      document.getElementById("tabT").className = "tab" + (t === "toilet" ? " tc" : "");
+      document.getElementById("tabN").className = "tab" + (t === "nurse" ? " tn" : "");
+      document.getElementById("mealbar").style.display = t === "care" ? "flex" : "none";
+      buildTable();
+      updateFooter();
+    }
+
+    // ════════════════════════════════════════════
+    //  朝昼夕 サブタブ切替
+    // ════════════════════════════════════════════
+    function switchMeal(mt) {
+      mealTime = mt;
+      MEAL_TIMES.forEach(m => {
+        const btn = document.getElementById(`mtab-${m.id}`);
+        if (!btn) return;
+        const saved = RESIDENTS.every(r => meals[r.id][m.id].saved);
+        btn.className = "mtab" + (m.id === mt ? " active" : saved ? " mtab-done" : "");
+      });
+      buildCareTable();
+      updateFooter();
+    }
+
+    // ════════════════════════════════════════════
+    //  テーブル構築
+    // ════════════════════════════════════════════
+    function buildTable() {
+      if (tab === "care") buildCareTable();
+      else if (tab === "toilet") buildToiletTable();
+      else buildNurseTable();
+    }
+
+    // ── 介護記録テーブル ──────────────────────
+    function buildCareTable() {
+      const mt = MEAL_TIMES.find(m => m.id === mealTime);
+      document.getElementById("thead").innerHTML = `
+    <tr>
+      <th class="col-name" style="text-align:left;">利用者</th>
+      ${MEAL_COLS.map(m => `<th class="col-meal">${m.label}</th>`).join("")}
+      <th class="col-water">水分</th>
+      <th class="col-absent">欠食</th>
+      <th class="col-note">特記</th>
+      <th class="col-save">保存</th>
+    </tr>`;
+
+      document.getElementById("tbody").innerHTML = RESIDENTS.map(r => {
+        const c = meals[r.id][mealTime];
+        const mealCells = MEAL_COLS.map(m => {
+          const amt = c.meal[m.id];
+          return `<td class="td-amt">
+        <div class="amt-btn ${AMT_CLASS[amt]} ${c.absent ? "absent-dim" : ""}" id="ab-${r.id}-${m.id}"
+          onclick="cycleAmt('${r.id}','${m.id}')">
+          <span>${amt}</span>
+          <span class="amt-unit">${amt === "全量" ? "摂取" : ""}</span>
+        </div>
+      </td>`;
+        }).join("");
+
+        return `<tr id="row-${r.id}">
+      <td class="td-name">
+        <div class="name-main">${r.name.split(" ")[0]}<br><span style="font-size:10px;font-weight:500;">${r.name.split(" ")[1] || ""}</span></div>
+        <div class="name-sub">${r.room}号室</div>
+      </td>
+      ${mealCells}
+      <td class="td-water">
+        <div class="water-wrap ${c.absent ? "absent-dim" : ""}" id="wb-${r.id}">
+          <button class="w-adj-btn" onclick="adjustWater('${r.id}',-10)">-</button>
+          <div class="water-display">
+            <span class="water-val" id="wv-${r.id}">${c.water}</span>
+            <span class="water-unit">ml</span>
+          </div>
+          <button class="w-adj-btn" onclick="adjustWater('${r.id}',10)">+</button>
+        </div>
+      </td>
+      <td class="td-absent">
+        <div class="absent-btn ${c.absent ? "on" : ""}" id="abn-${r.id}" onclick="toggleAbsent('${r.id}')">
+          <span class="absent-icon">✕</span>
+          <span class="absent-lbl">欠食</span>
+        </div>
+      </td>
+      <td class="td-text">
+        <input class="mini-input" type="text" placeholder="特記"
+          value="${c.note}"
+          oninput="meals['${r.id}']['${mealTime}'].note=this.value">
+      </td>
+      <td class="td-save">
+        ${saveCellHTML(r.id, 'care')}
+      </td>
+    </tr>`;
+      }).join("");
+
+      const cols = 4 + MEAL_COLS.length + 2;
+      document.getElementById("tfoot").innerHTML = `
+    <tr class="reset-row">
+      <td colspan="${cols}" style="padding:7px 10px;display:flex;gap:8px;align-items:center;">
+        <button class="reset-all-btn" onclick="resetAllCare()">全員を全量・800mlにリセット</button>
+      </td>
+    </tr>`;
+    }
+
+    // ── 排泄記録テーブル ──────────────────────
+    // 時刻選択肢（1h単位）
+    const HOURS = Array.from({ length: 24 }, (_, i) => i);
+    function hourLabel(h) { return `${String(h).padStart(2, "0")}:00`; }
+
+    // 便の状態選択肢
+    const STOOL_STATES = ["普通便", "軟便", "硬便", "水様便", "泥状便"];
+
+    function buildToiletTable() {
+      document.getElementById("thead").innerHTML = `
+    <tr>
+      <th class="col-name" style="text-align:left;padding-left:10px;">利用者</th>
+      <th style="flex:1;min-width:240px;text-align:left;padding:8px 8px;">排泄ログ</th>
+      <th style="min-width:100px;text-align:center;padding:8px 4px;">浣腸・下剤</th>
+      <th class="col-note" style="text-align:left;">特記</th>
+      <th class="col-save">保存</th>
+    </tr>`;
+
+      document.getElementById("tbody").innerHTML = RESIDENTS.map(r => renderToiletRow(r)).join("");
+
+      document.getElementById("tfoot").innerHTML = `
+    <tr class="reset-row">
+      <td colspan="5" style="padding:8px 10px;display:flex;gap:8px;align-items:center;">
+        <button class="reset-all-btn" onclick="resetAllToilet()">全員の排泄記録をリセット</button>
+      </td>
+    </tr>`;
+    }
+
+    function renderToiletRow(r) {
+      const td = toiletData[r.id];
+      const optBtns = TOILET_OPTS.map(v =>
+        `<div class="chip-mini ${td.opts.has(v) ? "on" : ""}"
+      onclick="toggleToiletOpt('${r.id}','${v}',this)">${v}</div>`
+      ).join("");
+
+      return `<tr id="row-${r.id}">
+    <td class="td-name">
+      <div class="name-main">${r.name.split(" ")[0]}<br><span style="font-size:10px;font-weight:500;">${r.name.split(" ")[1] || ""}</span></div>
+      <div class="name-sub">${r.room}号室</div>
+    </td>
+    <td class="td-toilet-log">
+      <div class="toilet-log-wrap" id="tlog-${r.id}">
+        ${renderLogs(r.id)}
+      </div>
+    </td>
+    <td class="td-toilet-opt" style="text-align:center;vertical-align:middle;padding:8px 4px;">
+      <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;">
+        ${optBtns}
+      </div>
+    </td>
+    <td class="td-text">
+      <input class="mini-input" type="text" placeholder="特記"
+        value="${td.note}"
+        oninput="toiletData['${r.id}'].note=this.value">
+    </td>
+    <td class="td-save">${saveCellHTML(r.id, 'toilet')}</td>
+  </tr>`;
+    }
+
+    function renderLogs(rid) {
+      const td = toiletData[rid];
+      const urineCount = td.logs.filter(l => l.type === "排尿").length;
+      const stoolCount = td.logs.filter(l => l.type === "排便").length;
+
+      const logRows = td.logs.map((log, idx) => {
+        const hourOpts = HOURS.map(h =>
+          `<option value="${h}" ${log.hour === h ? "selected" : ""}>${hourLabel(h)}</option>`
+        ).join("");
+        const typeClass = log.type === "排尿" ? "tl-urine" : "tl-stool";
+
+        // 排便のみ便状態セレクトを追加
+        const stoolSel = log.type === "排便" ? `
+      <select class="tl-state" onchange="setLogState('${rid}',${idx},this.value)">
+        ${STOOL_STATES.map(s => `<option value="${s}" ${(log.stoolState || "普通便") === s ? "selected" : ""}>${s}</option>`).join("")}
+      </select>` : `<span style="font-size:10px;color:var(--muted);">－</span>`;
+
+        return `<div class="toilet-log-row" id="tlogrow-${rid}-${idx}" style="margin-bottom:6px;">
+      <span class="tl-type ${typeClass}">${log.type}</span>
+      <select class="tl-hour" onchange="setLogHour('${rid}',${idx},this.value)">${hourOpts}</select>
+      ${stoolSel}
+      <button class="tl-del" onclick="removeLog('${rid}',${idx})" title="削除">×</button>
+    </div>`;
+      }).join("");
+
+      const countInfo = urineCount || stoolCount
+        ? `<div style="font-size:10px;color:var(--sub);margin-top:6px;padding:4px 0;">排尿<strong>${urineCount}</strong>回 　 排便<strong>${stoolCount}</strong>回</div>`
+        : "";
+
+      return `<div style="display:flex;flex-direction:column;gap:0;">
+    ${logRows}
+    <div class="tl-add-row" style="margin-top:8px;">
+      <button class="tl-add-btn urine" onclick="addLog('${rid}','排尿')" style="flex:1;">＋排尿</button>
+      <button class="tl-add-btn stool" onclick="addLog('${rid}','排便')" style="flex:1;">＋排便</button>
+    </div>
+    ${countInfo}
+  </div>`;
+    }
+
+    // ── 看護記録テーブル ──────────────────────
+    function buildNurseTable() {
+      document.getElementById("thead").innerHTML = `
+    <tr>
+      <th class="col-name" style="text-align:left;">利用者</th>
+      <th class="col-vital" style="min-width:48px;">体温</th>
+      <th class="col-bp">血圧<br><span style="font-weight:400;font-size:9px;">上／下</span></th>
+      <th class="col-vital" style="min-width:48px;">SpO2</th>
+      <th class="col-vital" style="min-width:48px;">脈拍</th>
+      <th class="col-vital" style="min-width:100px;">観察</th>
+      <th class="col-note">特記</th>
+      <th class="col-save">保存</th>
+    </tr>`;
+
+      document.getElementById("tbody").innerHTML = RESIDENTS.map(r => {
+        const n = nurse[r.id];
+        const tA = n.temp && parseFloat(n.temp) >= 37.5;
+        const bA = n.bpS && parseInt(n.bpS) >= 160;
+        const sA = n.spo2 && parseInt(n.spo2) < 95;
+
+        const condBtns = COND_OPTS.map(v =>
+          `<div class="chip-mini ${n.cond.has(v) ? "on" : ""}"
+        onclick="toggleCond('${r.id}','${v}',this)">${v}</div>`
+        ).join("");
+
+        return `<tr id="row-${r.id}">
+      <td class="td-name">
+        <div class="name-main">${r.name.split(" ")[0]}<br><span style="font-size:10px;font-weight:500;">${r.name.split(" ")[1] || ""}</span></div>
+        <div class="name-sub">${r.room}号室</div>
+      </td>
+      <td class="td-vital">
+        <input class="vital-inp ${tA ? "alrt" : ""}" id="vt-${r.id}" type="number"
+          step="0.1" placeholder="36.5" value="${n.temp}"
+          oninput="setVital('${r.id}','temp',this)">
+      </td>
+      <td class="td-vital">
+        <div class="vital-bp">
+          <div class="vbs-wrap">
+            <button class="v-adj-btn" onclick="adjustVital('${r.id}','bpS',-10)">-</button>
+            <input class="vital-inp ${bA ? "alrt" : ""}" id="vbs-${r.id}" type="number"
+              placeholder="120" value="${n.bpS}"
+              oninput="setVital('${r.id}','bpS',this)">
+            <button class="v-adj-btn" onclick="adjustVital('${r.id}','bpS',10)">+</button>
+          </div>
+          <div class="vital-bp-sep">↑↓</div>
+          <input class="vital-inp" id="vbd-${r.id}" type="number"
+            placeholder="80" value="${n.bpD}"
+            oninput="setVital('${r.id}','bpD',this)">
+        </div>
+      </td>
+      <td class="td-vital">
+        <input class="vital-inp ${sA ? "alrt" : ""}" id="vs-${r.id}" type="number"
+          placeholder="98" value="${n.spo2}"
+          oninput="setVital('${r.id}','spo2',this)">
+      </td>
+      <td class="td-vital">
+        <input class="vital-inp" id="vp-${r.id}" type="number"
+          placeholder="72" value="${n.pulse}"
+          oninput="setVital('${r.id}','pulse',this)">
+      </td>
+      <td class="td-chip">${condBtns}</td>
+      <td class="td-text">
+        <input class="mini-input n-focus" type="text" placeholder="特記"
+          value="${n.note}"
+          oninput="nurse['${r.id}'].note=this.value">
+      </td>
+      <td class="td-save">${saveCellHTML(r.id, 'nurse')}</td>
+    </tr>`;
+      }).join("");
+
+      document.getElementById("tfoot").innerHTML = "";
+    }
+
+    // 保存ボタンセルHTML
+    function saveCellHTML(rid, type) {
+      const saved = type === "care"
+        ? meals[rid][mealTime].saved
+        : type === "toilet"
+          ? toiletData[rid].saved
+          : nurse[rid].saved;
+      if (saved) {
+        const cls = (type === "nurse") ? "sc-done-n" : "sc-done";
+        return `<button class="save-cell-btn ${cls}" onclick="save_${type}('${rid}')">
+      <span class="save-icon">✓</span><span class="save-lbl">保存済</span>
+    </button>`;
+      }
+      const cls = (type === "nurse") ? "sc-nurse" : "sc-care";
+      return `<button class="save-cell-btn ${cls}" onclick="save_${type}('${rid}')">
+    <span class="save-icon">↑</span><span class="save-lbl">保存</span>
+  </button>`;
+    }
+
+    // ════════════════════════════════════════════
+    //  欠食トグル
+    // ════════════════════════════════════════════
+    function toggleAbsent(rid) {
+      const c = meals[rid][mealTime];
+      c.absent = !c.absent;
+      const btn = document.getElementById(`abn-${rid}`);
+      if (btn) btn.classList.toggle("on", c.absent);
+      MEAL_COLS.forEach(m => {
+        const next = c.absent ? "なし" : "全量";
+        c.meal[m.id] = next;
+        const ab = document.getElementById(`ab-${rid}-${m.id}`);
+        if (ab) {
+          Object.values(AMT_CLASS).forEach(cl => ab.classList.remove(cl));
+          ab.classList.add(AMT_CLASS[next]);
+          ab.classList.toggle("absent-dim", c.absent);
+          ab.children[0].textContent = next;
+          ab.children[1].textContent = next === "全量" ? "摂取" : "";
+        }
+      });
+      const newWater = c.absent ? 0 : 180;
+      c.water = newWater;
+      const wv = document.getElementById(`wv-${rid}`);
+      if (wv) wv.textContent = newWater;
+      const wb = document.getElementById(`wb-${rid}`);
+      if (wb) wb.classList.toggle("absent-dim", c.absent);
+    }
+
+    // ════════════════════════════════════════════
+    //  摂取量タップサイクル
+    // ════════════════════════════════════════════
+    function cycleAmt(rid, mid) {
+      const c = meals[rid][mealTime];
+      if (c.absent) return;
+      const next = AMT_CYCLE[(AMT_CYCLE.indexOf(c.meal[mid]) + 1) % AMT_CYCLE.length];
+      c.meal[mid] = next;
+      const btn = document.getElementById(`ab-${rid}-${mid}`);
+      if (!btn) return;
+      Object.values(AMT_CLASS).forEach(cl => btn.classList.remove(cl));
+      btn.classList.add(AMT_CLASS[next]);
+      btn.children[0].textContent = next;
+      btn.children[1].textContent = next === "全量" ? "摂取" : "";
+    }
+
+    // ════════════════════════════════════════════
+    //  水分調整
+    // ════════════════════════════════════════════
+    function adjustWater(rid, val, isSet = false) {
+      const c = meals[rid][mealTime];
+      if (c.absent) return;
+
+      if (isSet) {
+        c.water = val;
+      } else {
+        let cur = c.water || 0;
+        if (cur === 0) {
+          c.water = 180;
+        } else {
+          c.water = cur + val;
+        }
+      }
+
+      if (c.water < 0) c.water = 0;
+      if (c.water > 3000) c.water = 3000;
+
+      const el = document.getElementById(`wv-${rid}`);
+      if (el) el.textContent = c.water;
+    }
+
+    // ════════════════════════════════════════════
+    //  全員リセット（現在の食事区分のみ）
+    // ════════════════════════════════════════════
+    function resetAllCare() {
+      RESIDENTS.forEach(r => {
+        const c = meals[r.id][mealTime];
+        MEAL_COLS.forEach(m => { c.meal[m.id] = "全量"; });
+        c.water = 180; c.absent = false;
+      });
+      buildCareTable();
+      const mt = MEAL_TIMES.find(m => m.id === mealTime);
+      showToast(`${mt.label}：全員を全量・180mlにリセットしました`);
+    }
+
+    // ════════════════════════════════════════════
+    //  バイタル入力
+    // ════════════════════════════════════════════
+    function setVital(rid, key, input) {
+      nurse[rid][key] = input.value;
+      const n = nurse[rid];
+      const tA = n.temp && parseFloat(n.temp) >= 37.5;
+      const bA = n.bpS && parseInt(n.bpS) >= 160;
+      const sA = n.spo2 && parseInt(n.spo2) < 95;
+      setAlrt(`vt-${rid}`, tA);
+      setAlrt(`vbs-${rid}`, bA);
+      setAlrt(`vs-${rid}`, sA);
+      updateFooter();
+    }
+    function setAlrt(id, on) {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle("alrt", on);
+    }
+
+    // ════════════════════════════════════════════
+    //  バイタル数値調整（10刻み等）
+    // ════════════════════════════════════════════
+    function adjustVital(rid, key, diff) {
+      const n = nurse[rid];
+      let cur = parseInt(n[key]);
+
+      if (isNaN(cur) || cur === 0) {
+        cur = 180; // 180スタート
+      } else {
+        cur += diff;
+      }
+
+      const idStr = (key === "bpS") ? `vbs-${rid}` : `vbd-${rid}`;
+      const el = document.getElementById(idStr);
+      if (el) {
+        el.value = cur;
+        setVital(rid, key, el);
+      }
+    }
+
+    // ════════════════════════════════════════════
+    //  排泄ログ操作
+    // ════════════════════════════════════════════
+    function addLog(rid, type) {
+      const now = new Date().getHours();
+      const log = { type, hour: now };
+      if (type === "排便") log.stoolState = "普通便";
+      toiletData[rid].logs.push(log);
+      refreshToiletLogs(rid);
+    }
+
+    function removeLog(rid, idx) {
+      toiletData[rid].logs.splice(idx, 1);
+      refreshToiletLogs(rid);
+    }
+
+    function setLogHour(rid, idx, val) {
+      toiletData[rid].logs[idx].hour = parseInt(val);
+    }
+
+    function setLogState(rid, idx, val) {
+      toiletData[rid].logs[idx].stoolState = val;
+    }
+
+    function refreshToiletLogs(rid) {
+      const wrap = document.getElementById(`tlog-${rid}`);
+      if (wrap) wrap.innerHTML = renderLogs(rid);
+    }
+
+    function toggleToiletOpt(rid, val, el) {
+      const s = toiletData[rid].opts;
+      if (s.has(val)) { s.delete(val); el.classList.remove("on"); }
+      else { s.add(val); el.classList.add("on"); }
+    }
+
+    function resetAllToilet() {
+      RESIDENTS.forEach(r => {
+        toiletData[r.id].logs = [];
+        toiletData[r.id].opts.clear();
+        toiletData[r.id].note = "";
+        toiletData[r.id].saved = false;
+      });
+      buildToiletTable();
+      showToast("全員の排泄記録をリセットしました");
+    }
+
+    function toggleCond(rid, val, el) {
+      const s = nurse[rid].cond;
+      if (s.has(val)) { s.delete(val); el.classList.remove("on"); }
+      else { s.add(val); el.classList.add("on"); }
+    }
+
+    // ════════════════════════════════════════════
+    //  保存
+    // ════════════════════════════════════════════
+    async function save_care(rid) {
+      const r = RESIDENTS.find(x => x.id === rid);
+      const c = meals[rid][mealTime];
+      const mt = MEAL_TIMES.find(m => m.id === mealTime);
+      const ts = timestamp();
+      const mealStr = c.absent
+        ? "欠食"
+        : MEAL_COLS.map(m => `${m.label}:${c.meal[m.id]}`).join("　");
+      await postGAS({
+        action: "addRecord", residentId: rid,
+        sheetName: "食事・水分",
+        row: [ts, r.name, r.room, mt.label, mealStr, `水分${c.water}ml`, c.note]
+      });
+      meals[rid][mealTime].saved = true;
+      refreshSaveBtn(rid, "care");
+      updateMtabStyle();
+      showToast(`${r.name}（${mt.label}）を保存しました`);
+      updateFooter();
+    }
+
+    async function save_toilet(rid) {
+      const r = RESIDENTS.find(x => x.id === rid);
+      const td = toiletData[rid];
+      const ts = timestamp();
+
+      // ログを時刻順にソートして文字列化
+      const sorted = [...td.logs].sort((a, b) => a.hour - b.hour);
+      const logStr = sorted.map(l => {
+        const state = l.type === "排便" ? `（${l.stoolState || "普通便"}）` : "";
+        return `${hourLabel(l.hour)} ${l.type}${state}`;
+      }).join("、") || "記録なし";
+      const urineCount = td.logs.filter(l => l.type === "排尿").length;
+      const stoolCount = td.logs.filter(l => l.type === "排便").length;
+      const countStr = `排尿${urineCount}回 排便${stoolCount}回`;
+      const optsStr = [...td.opts].join("・");
+
+      await postGAS({
+        action: "addRecord", residentId: rid,
+        sheetName: "排泄記録",
+        row: [ts, r.name, r.room, countStr, logStr, optsStr, td.note]
+      });
+      toiletData[rid].saved = true;
+      refreshSaveBtn(rid, "toilet");
+      showToast(`${r.name} の排泄記録を保存しました`);
+      updateFooter();
+    }
+
+    async function save_nurse(rid) {
+      const r = RESIDENTS.find(x => x.id === rid);
+      const n = nurse[rid];
+      const ts = timestamp();
+      const v = [
+        n.temp ? `体温${n.temp}℃` : "",
+        n.bpS ? `血圧${n.bpS}/${n.bpD}` : "",
+        n.spo2 ? `SpO2 ${n.spo2}%` : "",
+        n.pulse ? `脈拍${n.pulse}` : "",
+      ].filter(Boolean).join("　");
+      await postGAS({
+        action: "addRecord", residentId: rid,
+        sheetName: "看護記録",
+        row: [ts, r.name, r.room, v, [...n.cond].join("・"), n.note]
+      });
+      nurse[rid].saved = true;
+      refreshSaveBtn(rid, "nurse");
+      showToast(`${r.name} の看護記録を保存しました`);
+      updateFooter();
+    }
+
+    async function saveAll() {
+      let count = 0;
+      for (const r of RESIDENTS) {
+        if (tab === "care" && !meals[r.id][mealTime].saved) { await save_care(r.id); count++; }
+        if (tab === "toilet" && !toiletData[r.id].saved) { await save_toilet(r.id); count++; }
+        if (tab === "nurse" && !nurse[r.id].saved) { await save_nurse(r.id); count++; }
+      }
+      showToast(count === 0 ? "全員分すでに保存済です" : `${count}名分を一括保存しました`);
+    }
+
+    function refreshSaveBtn(rid, type) {
+      const td = document.querySelector(`#row-${rid} .td-save`);
+      if (td) td.innerHTML = saveCellHTML(rid, type);
+    }
+
+    // サブタブのdone表示更新
+    function updateMtabStyle() {
+      MEAL_TIMES.forEach(m => {
+        const btn = document.getElementById(`mtab-${m.id}`);
+        if (!btn) return;
+        const allSaved = RESIDENTS.every(r => meals[r.id][m.id].saved);
+        if (m.id === mealTime) btn.className = "mtab active";
+        else btn.className = "mtab" + (allSaved ? " mtab-done" : "");
+      });
+    }
+
+    async function postGAS(data) {
+      if (GAS_URL.includes("ここに")) {
+        await new Promise(r => setTimeout(r, 300));
+        return { ok: true, demo: true };
+      }
+      try {
+        // residentNameを自動付与（GASでブック名に使用）
+        if (data.residentId && !data.residentName) {
+          const r = RESIDENTS.find(x => x.id === data.residentId);
+          if (r) data.residentName = r.name;
+        }
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify(data),
+        });
+        return await res.json();
+      } catch (e) {
+        console.error("GAS通信エラー:", e);
+        showToast("通信エラー。GASのURLを確認してください。");
+        throw e;
+      }
+    }
+
+    // ════════════════════════════════════════════
+    //  フッター・ユーティリティ
+    // ════════════════════════════════════════════
+    function updateFooter() {
+      let saved = 0;
+      let label = "";
+      if (tab === "care") {
+        saved = RESIDENTS.filter(r => meals[r.id][mealTime].saved).length;
+        label = MEAL_TIMES.find(m => m.id === mealTime).label + "　";
+      } else if (tab === "toilet") {
+        saved = RESIDENTS.filter(r => toiletData[r.id].saved).length;
+        label = "排泄　";
+      } else {
+        saved = RESIDENTS.filter(r => nurse[r.id].saved).length;
+        label = "看護　";
+      }
+      document.getElementById("fCount").innerHTML =
+        `<span class="f-count">${label}${saved}/${RESIDENTS.length}名</span> 保存済`;
+      const alerts = RESIDENTS.filter(r => {
+        const n = nurse[r.id];
+        return (parseFloat(n.temp) >= 37.5) || (parseInt(n.bpS) >= 160) || (n.spo2 !== "" && parseInt(n.spo2) < 95);
+      }).length;
+      document.getElementById("fAlert").textContent = alerts ? `⚠ アラート ${alerts}名` : "";
+    }
+    function timestamp() {
+      const n = new Date();
+      return `${n.getFullYear()}/${n.getMonth() + 1}/${n.getDate()} ` +
+        `${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}`;
+    }
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg; t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 2400);
+    }
+
+    // ════════════════════════════════════════════
+    //  音声入力
+    // ════════════════════════════════════════════
+    let recognition = null;
+    let isRecording = false;
+    let lastFocusedInput = null;
+
+    // フォーカス中の要素を追跡
+    document.addEventListener("focusin", (e) => {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
+        lastFocusedInput = e.target;
+      }
+    });
+
+    function toggleVoiceInput() {
+      // セキュリティ要件のチェック
+      if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        showToast("音声入力にはHTTPS環境（またはlocalhost）が必要です");
+        return;
+      }
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        showToast("このブラウザは音声入力に対応していません（Chrome/Edge推奨）");
+        console.error("SpeechRecognition is not supported in this browser.");
+        return;
+      }
+
+      if (isRecording) {
+        stopRecording();
+      } else {
+        startRecording(SpeechRecognition);
+      }
+    }
+
+    function startRecording(SpeechRecognition) {
+      try {
+        if (!recognition) {
+          recognition = new SpeechRecognition();
+          recognition.lang = "ja-JP";
+          recognition.continuous = true;
+          recognition.interimResults = false;
+
+          recognition.onresult = (event) => {
+            const result = event.results[event.results.length - 1];
+            if (result.isFinal) {
+              let transcript = result[0].transcript.trim();
+              insertAtCursor(transcript);
+            }
+          };
+
+          recognition.onerror = (event) => {
+            console.error("Speech Recognition Error:", event.error);
+            let msg = "音声入力エラー: " + event.error;
+            if (event.error === "not-allowed") msg = "マイクの使用が許可されていません";
+            if (event.error === "network") msg = "ネットワークエラーが発生しました";
+            showToast(msg);
+            stopRecording();
+          };
+
+          recognition.onend = () => {
+            if (isRecording) {
+              console.log("Recognition ended unexpectedly. Restarting...");
+              try {
+                recognition.start();
+              } catch (e) {
+                console.error("Failed to restart recognition:", e);
+                stopRecording();
+              }
+            }
+          };
+        }
+
+        recognition.start();
+        isRecording = true;
+        document.getElementById("voiceBtn").classList.add("recording");
+        showToast("音声入力中...");
+        console.log("Speech recognition started.");
+      } catch (e) {
+        console.error("Speech recognition start failed:", e);
+        showToast("起動失敗: " + e.message);
+        isRecording = false;
+        document.getElementById("voiceBtn").classList.remove("recording");
+      }
+    }
+
+    function stopRecording() {
+      if (recognition) {
+        recognition.stop();
+      }
+      isRecording = false;
+      document.getElementById("voiceBtn").classList.remove("recording");
+      showToast("音声入力を停止しました");
+    }
+
+    function insertAtCursor(text) {
+      if (!lastFocusedInput) {
+        showToast("入力先のフォームを選択してください");
+        return;
+      }
+
+      const start = lastFocusedInput.selectionStart;
+      const end = lastFocusedInput.selectionEnd;
+      const val = lastFocusedInput.value;
+
+      // 前後の空白調整
+      const spaceBefore = (start > 0 && val[start - 1] !== " " && val[start - 1] !== "\n") ? " " : "";
+      const newText = spaceBefore + text;
+
+      lastFocusedInput.value = val.substring(0, start) + newText + val.substring(end);
+      lastFocusedInput.selectionStart = lastFocusedInput.selectionEnd = start + newText.length;
+
+      // inputイベントを発生させて、既存のJSに値を同期させる
+      lastFocusedInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  </script>
+</body>
+
+</html>
